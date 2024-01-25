@@ -187,7 +187,11 @@ class Data(ctk.CTkScrollableFrame):
         for i in self.data_dict.keys():
             label = str(i + ": ")
             ctk.CTkLabel(frame,text=label,anchor='w').pack_configure(fill='x',side='top',padx=15,pady=5)
-            ctk.CTkEntry(frame,fg_color='#232D3F').pack_configure(fill='x',side='top',padx=10,pady=5)
+            if (i == 'Gender'):
+                option = ['Male','Female']
+                ctk.CTkComboBox(frame,values=option,border_width=0,dropdown_fg_color='#232D3F',dropdown_hover_color='#008170').pack_configure(padx=10,pady=10,fill='x',side='top')
+            else:
+                ctk.CTkEntry(frame,fg_color='#232D3F').pack_configure(fill='x',side='top',padx=10,pady=5)
         
         button_frame = ctk.CTkFrame(frame,fg_color='transparent')
         button_frame.pack_configure(side='top',fill='x',padx=10,pady=10)
