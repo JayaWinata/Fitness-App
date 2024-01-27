@@ -1,7 +1,9 @@
 import customtkinter as ctk
+import sys
+sys.path.append('../')
 from Assets.title import Title
 
-ctk.set_default_color_theme('./Assets/theme.json')
+ctk.set_default_color_theme('../Assets/theme.json')
 
 class App(ctk.CTk):
     def __init__(self):
