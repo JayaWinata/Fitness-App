@@ -122,6 +122,14 @@ class Schedule(ctk.CTkScrollableFrame):
         Dashboard(master)
 
 class Data(ctk.CTkScrollableFrame):
+    data_dict = {
+            'Gender': 'Male',
+            'Height':180,
+            'Weight': 70,
+            'Age':23,
+            'Body Fat': 30,
+        }
+    
     def __init__(self,master: ctk.CTk):
         super().__init__(master)
         self.configure(fg_color='transparent')
@@ -137,21 +145,15 @@ class Data(ctk.CTkScrollableFrame):
         
         self.data_frame = ctk.CTkFrame(self,height=(master.winfo_height() * 3 / 4 -10))
         self.data_frame.pack_configure(padx=10,pady=10,fill='x',side='top')
-        self.data_dict = {
-            'Gender': 'Male',
-            'Height':180,
-            'Weight': 70,
-            'Age':23,
-            'Body Fat': 30,
-        }
 
-        for key,value in self.data_dict.items():
+        global data_dict
+        for key,value in Data.data_dict.items():
             frame = ctk.CTkFrame(self.data_frame,border_color='white',border_width=.5,fg_color='transparent')
             frame.pack_configure(fill='x',side='top',padx=10,pady=10)
             ctk.CTkLabel(frame,text=key).pack_configure(side='left',padx=10)
             ctk.CTkLabel(frame,text=value).pack_configure(side='right',padx=10)
 
-        self.edit_button = ctk.CTkButton(self,text='Edit data',command=self.edit_data)
+        self.edit_button = ctk.CTkButton(self,text='Edit data',command=lambda: self.edit_data(master))
         self.edit_button.pack_configure(fill='x',side='top',padx=10,pady=10)
         self.back_lable = ctk.CTkLabel(master=self,text='<< Back',anchor='w',text_color='#5f5f5f')
         self.back_lable.pack_configure(padx=20,pady=10,fill='x',side='top')
@@ -161,6 +163,11 @@ class Data(ctk.CTkScrollableFrame):
         self.pack_forget()
         self.destroy()
         Dashboard(master)
+
+    def edit_data(self,master):
+        self.pack_forget()
+        self.destroy()
+        EditData(master)
     
     def input_calories(self):
         input_dialog = ctk.CTkInputDialog(text='Input your daily calories:',title='',entry_fg_color='#232D3F')
@@ -168,39 +175,36 @@ class Data(ctk.CTkScrollableFrame):
         y = (input_dialog.winfo_screenheight() - input_dialog.winfo_height()) // 2
         input_dialog.geometry(f'{input_dialog.winfo_width()}x{input_dialog.winfo_height()}+{x}+{y}')
 
-    def edit_data(self):
+class EditData(ctk.CTkScrollableFrame):
+        def __init__(self,master: ctk.CTk):
+            super().__init__(master)
+            self.configure(fg_color='transparent')
+            self.pack(expand=1,fill='both',padx=10,pady=10)
+            self.title = Title(self,'Edit Data')
+            self.title.pack_configure(side='top',fill='x',padx=20,pady=5)
 
-        def save():
-            frame.destroy()
-            window.destroy()
-        
-        def cancel():
-            frame.destroy()
-            window.destroy()
+            for i in Data.data_dict.keys():
+                label = str(i + ": ")
+                ctk.CTkLabel(self,text=label,anchor='w').pack_configure(fill='x',side='top',padx=45,pady=5)
+                if (i == 'Gender'):
+                    option = ['Male','Female']
+                    ctk.CTkComboBox(self,values=option,border_width=0,dropdown_fg_color='#232D3F',dropdown_hover_color='#008170').pack_configure(padx=40,pady=5,fill='x',side='top')
+                else:
+                    ctk.CTkEntry(self,fg_color='#232D3F').pack_configure(fill='x',side='top',padx=40,pady=5)
+            
+            button_frame = ctk.CTkFrame(self,fg_color='transparent')
+            button_frame.pack_configure(side='top',fill='x',padx=40,pady=20)
+            save_button = ctk.CTkButton(master=button_frame,width=(button_frame.winfo_width() / 2 - 10),text='Save',command=self.save)
+            save_button.pack_configure(side='left',fill='y')
+            ctk.CTkLabel(master=button_frame,text='').pack_configure(side='left',padx=10)
+            cancel_button = ctk.CTkButton(master=button_frame,width=(button_frame.winfo_width() / 2 - 10),text='Cancel',command=lambda:self.cancel(master))
+            cancel_button.pack_configure(side='left',fill='both')
 
-        window = ctk.CTk()
-        x = (window.winfo_screenwidth() - 250) // 2 -50
-        y = (window.winfo_screenheight() - 300) // 2
-        window.geometry(f'{250}x{300}+{x}+{y}')
-        frame = ctk.CTkScrollableFrame(window)
-        frame.configure(fg_color='transparent')
-        frame.pack(expand=1,fill='both',padx=10,pady=10)
+        def save(self):
+            pass
 
-        for i in self.data_dict.keys():
-            label = str(i + ": ")
-            ctk.CTkLabel(frame,text=label,anchor='w').pack_configure(fill='x',side='top',padx=15,pady=5)
-            if (i == 'Gender'):
-                option = ['Male','Female']
-                ctk.CTkComboBox(frame,values=option,border_width=0,dropdown_fg_color='#232D3F',dropdown_hover_color='#008170').pack_configure(padx=10,pady=10,fill='x',side='top')
-            else:
-                ctk.CTkEntry(frame,fg_color='#232D3F').pack_configure(fill='x',side='top',padx=10,pady=5)
-        
-        button_frame = ctk.CTkFrame(frame,fg_color='transparent')
-        button_frame.pack_configure(side='top',fill='x',padx=10,pady=10)
-        save_button = ctk.CTkButton(master=button_frame,width=(button_frame.winfo_width() / 2 - 10),text='Save',command=save)
-        save_button.pack_configure(side='left',fill='y')
-        ctk.CTkLabel(master=button_frame,text='').pack_configure(side='left',padx=10)
-        cancel_button = ctk.CTkButton(master=button_frame,width=(button_frame.winfo_width() / 2 - 10),text='Cancel',command=cancel)
-        cancel_button.pack_configure(side='left',fill='both')
+        def cancel(self,master):
+            self.pack_forget()
+            self.destroy()
+            Data(master)
 
-        window.mainloop()
