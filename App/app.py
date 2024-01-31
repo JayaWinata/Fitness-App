@@ -1,6 +1,6 @@
+import sys
 from pages import *
 from Database import db
-import sys
 sys.path.append('../')
 from Assets import plot
 

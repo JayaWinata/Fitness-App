@@ -1,7 +1,8 @@
-import customtkinter as ctk
 import sys
+import customtkinter as ctk
 from PIL import Image, ImageFilter
 sys.path.append('../')
+from Database import db
 from Assets.title import Title
 from Assets import plot
 
@@ -46,6 +47,9 @@ class Dashboard(ctk.CTkFrame):
         self.data_frame.pack_configure(fill='y',side='left',padx=10,pady=10)
         self.data_frame.bind('<Button-1>',lambda x: self.data(master))
 
+        self.show_plot(master)
+
+    def show_plot(self,master):
         plot.plot_data('weight',10)
         raw_image = Image.open('../Assets/Image/weight.png')
         raw_image = raw_image.filter(ImageFilter.DETAIL)
@@ -77,6 +81,13 @@ class Stats(ctk.CTkScrollableFrame):
         self.title = Title(self,text='Stats')
         self.title.pack_configure(fill='x',side='top',padx=20)
 
+        self.show_stats(master)
+
+        self.back_lable = ctk.CTkLabel(master=self,text='<< Back',anchor='w',text_color='#5f5f5f')
+        self.back_lable.pack_configure(padx=20,pady=10,fill='x',side='top')
+        self.back_lable.bind('<Button-1>',lambda x: self.back(master))
+
+    def show_stats(self,master):
         for i in plot.column_name:
             parent = ctk.CTkFrame(self,height=(master.winfo_height() / 3 -10))
             parent.pack_configure(fill='x',side='top',padx=10,pady=10)
@@ -85,11 +96,6 @@ class Stats(ctk.CTkScrollableFrame):
             image = ctk.CTkImage(dark_image=raw_image,size=(420,120))
             image = ctk.CTkLabel(master=parent,image=image,text='')
             image.pack_configure(padx=5,pady=5)
-
-
-        self.back_lable = ctk.CTkLabel(master=self,text='<< Back',anchor='w',text_color='#5f5f5f')
-        self.back_lable.pack_configure(padx=20,pady=10,fill='x',side='top')
-        self.back_lable.bind('<Button-1>',lambda x: self.back(master))
 
     def back(self,master):
         self.pack_forget()
@@ -107,16 +113,15 @@ class Schedule(ctk.CTkScrollableFrame):
         self.days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
         self.combo_box = ctk.CTkComboBox(self,values=self.days,border_width=0,dropdown_fg_color='#232D3F',dropdown_hover_color='#008170')
         self.combo_box.pack_configure(padx=10,pady=10,fill='x',side='top')
+        self.show_button = ctk.CTkButton(self,text='Show Schedule',command=self.show_schedule)
+        self.show_button.pack_configure(padx=10,pady=10,fill='x',side='top')
 
-        self.list_frame = ctk.CTkFrame(master=self,fg_color='transparent',border_color='#5f5f5f',border_width=1)
-        self.list_frame.pack_configure(fill='x',expand=1,padx=10,pady=10,side='top')
-        self.temp = ['1','ttgertyrw','34546','34terfs','rwesf']
-        for i in self.temp:
-            ctk.CTkLabel(master=self.list_frame,text=i,anchor='w').pack_configure(padx=5,pady=2,fill='x',side='top')
+        self.list_frame = ctk.CTkFrame(master=self,height=100,border_color='#5f5f5f',border_width=1,fg_color='transparent')
+        self.list_frame.pack_configure(fill='x',padx=10,pady=10,side='top')
 
         self.button_frame = ctk.CTkFrame(self,fg_color='transparent')
         self.button_frame.pack_configure(padx=10,pady=10,side='top',fill='x')
-        self.new_button = ctk.CTkButton(self.button_frame,text='New',width=(master.winfo_width() / 4 +10),command=self.add)
+        self.new_button = ctk.CTkButton(self.button_frame,text='New',width=(master.winfo_width() / 4 +10),command=lambda: self.add(master))
         self.new_button.grid_configure(row=0,column=0,padx=5)
         self.edit_button = ctk.CTkButton(self.button_frame,text='Edit',width=(master.winfo_width() / 4 + 10),command=self.edit)
         self.edit_button.grid_configure(row=0,column=1,padx=5)
@@ -126,29 +131,54 @@ class Schedule(ctk.CTkScrollableFrame):
         self.additional_frame = ctk.CTkFrame(self,fg_color='transparent',height=35)
         self.additional_frame.pack_configure(fill='x',side='top',padx=20,pady=5)
 
+        self.error = ctk.CTkLabel(self,text='',anchor='w')
+        self.error.pack_configure(fill='x',side='top',padx=20,pady=10)
 
         self.back_lable = ctk.CTkLabel(master=self,text='<< Back',anchor='w',text_color='#5f5f5f')
         self.back_lable.pack_configure(padx=20,pady=10,fill='x',side='top')
         self.back_lable.bind('<Button-1>',lambda x: self.back(master))
+
+    def show_schedule(self):
+        for widget in self.list_frame.winfo_children():
+            widget.destroy()
+
+        self.list_frame.configure(height=100)
+        self.data = db.get_schedule(self.combo_box.get())
+        if self.data:
+            for i in self.data:
+                ctk.CTkLabel(master=self.list_frame,text=f'{i[0]}. {i[1]}',anchor='w').pack_configure(padx=5,pady=2,fill='x',side='top')
 
     def edit(self):
         self.clear_frame()
         self.additional_frame.pack_configure(fill='x',side='top',padx=20)
         order_entry = ctk.CTkEntry(master=self.additional_frame,placeholder_text='List number',width=self.additional_frame.winfo_width() / 5,fg_color='#232D3F',border_width=0)
         order_entry.pack_configure(fill='y',side='left',padx=5)
-        valeu_entry = ctk.CTkEntry(master=self.additional_frame,placeholder_text='Value',fg_color='#232D3F',border_width=0,width=(self.additional_frame.winfo_width()*3/5))
-        valeu_entry.pack_configure(fill='y',side='left',padx=5)
+        value_entry = ctk.CTkEntry(master=self.additional_frame,placeholder_text='Value',fg_color='#232D3F',border_width=0,width=(self.additional_frame.winfo_width()*3/5))
+        value_entry.pack_configure(fill='y',side='left',padx=5)
         apply_button = ctk.CTkButton(self.additional_frame,width=(self.additional_frame.winfo_width()/5),text='Apply')
         apply_button.pack_configure(fill='y',side='left',padx=5)
     
-    def add(self):
+    def add(self,master):
         self.clear_frame()
         self.additional_frame.pack_configure(fill='x',side='top',padx=20)
         order_entry = ctk.CTkEntry(master=self.additional_frame,placeholder_text='List number',width=self.additional_frame.winfo_width() / 5,fg_color='#232D3F',border_width=0)
         order_entry.pack_configure(fill='y',side='left',padx=5)
-        valeu_entry = ctk.CTkEntry(master=self.additional_frame,placeholder_text='Value',fg_color='#232D3F',border_width=0,width=(self.additional_frame.winfo_width()*3/5))
-        valeu_entry.pack_configure(fill='y',side='left',padx=5)
-        apply_button = ctk.CTkButton(self.additional_frame,width=(self.additional_frame.winfo_width()/5),text='Apply')
+        value_entry = ctk.CTkEntry(master=self.additional_frame,placeholder_text='Value',fg_color='#232D3F',border_width=0,width=(self.additional_frame.winfo_width()*3/5))
+        value_entry.pack_configure(fill='y',side='left',padx=5)
+
+        def apply():
+            order = order_entry.get()
+            value = value_entry.get()
+            order_list = [i[0] for i in self.data]
+            if (int(order) not in order_list) and value:
+                db.add_schedule((order,value,self.combo_box.get()))
+                ctk.CTkLabel(master=self.list_frame,text=f'{order}. {value}',anchor='w').pack_configure(padx=5,pady=2,fill='x',side='top')
+                self.error.configure(text='')
+                self.clear_frame()
+            else:
+                self.error.configure(text='The list number must be unique, and value must be filled!')
+
+        apply_button = ctk.CTkButton(self.additional_frame,width=(self.additional_frame.winfo_width()/5),text='Apply',command=apply)
         apply_button.pack_configure(fill='y',side='left',padx=5)
 
     def delete(self):
@@ -156,6 +186,14 @@ class Schedule(ctk.CTkScrollableFrame):
         self.additional_frame.pack_configure(fill='x',side='top',padx=20)
         order_entry = ctk.CTkEntry(master=self.additional_frame,placeholder_text='List number',width=self.additional_frame.winfo_width() / 5,fg_color='#232D3F',border_width=0)
         order_entry.pack_configure(fill='y',side='left',padx=5)
+
+        # def apply():
+        #     order = order_entry.get()
+        #     db.delete_schedule((order,self.combo_box.get()))
+        #     for i in self.list_frame.children:
+        #         if i.startswith(order):
+
+
         apply_button = ctk.CTkButton(self.additional_frame,width=(self.additional_frame.winfo_width()*4/5),text='Delete')
         apply_button.pack_configure(fill='y',side='left',padx=5)
 
