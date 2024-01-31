@@ -1,7 +1,9 @@
 import customtkinter as ctk
 import sys
+from PIL import Image, ImageFilter
 sys.path.append('../')
 from Assets.title import Title
+from Assets import plot
 
 ctk.set_default_color_theme('../Assets/theme.json')
 
@@ -44,18 +46,26 @@ class Dashboard(ctk.CTkFrame):
         self.data_frame.pack_configure(fill='y',side='left',padx=10,pady=10)
         self.data_frame.bind('<Button-1>',lambda x: self.data(master))
 
-    def render_plot():
-        pass
+        plot.plot_data('weight',10)
+        raw_image = Image.open('../Assets/Image/weight.png')
+        raw_image = raw_image.filter(ImageFilter.DETAIL)
+        image = ctk.CTkImage(dark_image=raw_image,size=(450,120))
+        image = ctk.CTkLabel(master=self.plot_frame,image=image,text='')
+        image.pack_configure(padx=5,pady=5)
+        image.bind('<Button-1>',lambda x: self.stats(master))
 
     def stats(self,master):
+        self.pack_forget()
         self.destroy()
         Stats(master)
 
     def schedule(self,master):
+        self.pack_forget()
         self.destroy()
         Schedule(master)
 
     def data(self,master):
+        self.pack_forget()
         self.destroy()
         Data(master)
 
@@ -67,14 +77,15 @@ class Stats(ctk.CTkScrollableFrame):
         self.title = Title(self,text='Stats')
         self.title.pack_configure(fill='x',side='top',padx=20)
 
-        self.body_weight_frame = ctk.CTkFrame(self,height=(master.winfo_height() / 3 -10))
-        self.body_weight_frame.pack_configure(fill='x',side='top',padx=10,pady=10)
-        
-        self.calories_frame = ctk.CTkFrame(self,height=(master.winfo_height() / 3 -10))
-        self.calories_frame.pack_configure(fill='x',side='top',padx=10,pady=10)
-        
-        self.body_fat_frame = ctk.CTkFrame(self,height=(master.winfo_height() / 3 -10))
-        self.body_fat_frame.pack_configure(fill='x',side='top',padx=10,pady=10)
+        for i in plot.column_name:
+            parent = ctk.CTkFrame(self,height=(master.winfo_height() / 3 -10))
+            parent.pack_configure(fill='x',side='top',padx=10,pady=10)
+            raw_image = Image.open(f'../Assets/Image/{i}.png')
+            raw_image = raw_image.filter(ImageFilter.DETAIL)
+            image = ctk.CTkImage(dark_image=raw_image,size=(420,120))
+            image = ctk.CTkLabel(master=parent,image=image,text='')
+            image.pack_configure(padx=5,pady=5)
+
 
         self.back_lable = ctk.CTkLabel(master=self,text='<< Back',anchor='w',text_color='#5f5f5f')
         self.back_lable.pack_configure(padx=20,pady=10,fill='x',side='top')
@@ -105,16 +116,53 @@ class Schedule(ctk.CTkScrollableFrame):
 
         self.button_frame = ctk.CTkFrame(self,fg_color='transparent')
         self.button_frame.pack_configure(padx=10,pady=10,side='top',fill='x')
-        self.new_button = ctk.CTkButton(self.button_frame,text='New',width=(master.winfo_width() / 4 +10))
+        self.new_button = ctk.CTkButton(self.button_frame,text='New',width=(master.winfo_width() / 4 +10),command=self.add)
         self.new_button.grid_configure(row=0,column=0,padx=5)
-        self.edit_button = ctk.CTkButton(self.button_frame,text='Edit',width=(master.winfo_width() / 4 + 10))
+        self.edit_button = ctk.CTkButton(self.button_frame,text='Edit',width=(master.winfo_width() / 4 + 10),command=self.edit)
         self.edit_button.grid_configure(row=0,column=1,padx=5)
-        self.new_button = ctk.CTkButton(self.button_frame,text='Delete',width=(master.winfo_width() / 4 + 10))
-        self.new_button.grid_configure(row=0,column=2,padx=5)
+        self.delete_button = ctk.CTkButton(self.button_frame,text='Delete',width=(master.winfo_width() / 4 + 10),command=self.delete)
+        self.delete_button.grid_configure(row=0,column=2,padx=5)
+
+        self.additional_frame = ctk.CTkFrame(self,fg_color='transparent',height=35)
+        self.additional_frame.pack_configure(fill='x',side='top',padx=20,pady=5)
+
 
         self.back_lable = ctk.CTkLabel(master=self,text='<< Back',anchor='w',text_color='#5f5f5f')
         self.back_lable.pack_configure(padx=20,pady=10,fill='x',side='top')
         self.back_lable.bind('<Button-1>',lambda x: self.back(master))
+
+    def edit(self):
+        self.clear_frame()
+        self.additional_frame.pack_configure(fill='x',side='top',padx=20)
+        order_entry = ctk.CTkEntry(master=self.additional_frame,placeholder_text='List number',width=self.additional_frame.winfo_width() / 5,fg_color='#232D3F',border_width=0)
+        order_entry.pack_configure(fill='y',side='left',padx=5)
+        valeu_entry = ctk.CTkEntry(master=self.additional_frame,placeholder_text='Value',fg_color='#232D3F',border_width=0,width=(self.additional_frame.winfo_width()*3/5))
+        valeu_entry.pack_configure(fill='y',side='left',padx=5)
+        apply_button = ctk.CTkButton(self.additional_frame,width=(self.additional_frame.winfo_width()/5),text='Apply')
+        apply_button.pack_configure(fill='y',side='left',padx=5)
+    
+    def add(self):
+        self.clear_frame()
+        self.additional_frame.pack_configure(fill='x',side='top',padx=20)
+        order_entry = ctk.CTkEntry(master=self.additional_frame,placeholder_text='List number',width=self.additional_frame.winfo_width() / 5,fg_color='#232D3F',border_width=0)
+        order_entry.pack_configure(fill='y',side='left',padx=5)
+        valeu_entry = ctk.CTkEntry(master=self.additional_frame,placeholder_text='Value',fg_color='#232D3F',border_width=0,width=(self.additional_frame.winfo_width()*3/5))
+        valeu_entry.pack_configure(fill='y',side='left',padx=5)
+        apply_button = ctk.CTkButton(self.additional_frame,width=(self.additional_frame.winfo_width()/5),text='Apply')
+        apply_button.pack_configure(fill='y',side='left',padx=5)
+
+    def delete(self):
+        self.clear_frame()
+        self.additional_frame.pack_configure(fill='x',side='top',padx=20)
+        order_entry = ctk.CTkEntry(master=self.additional_frame,placeholder_text='List number',width=self.additional_frame.winfo_width() / 5,fg_color='#232D3F',border_width=0)
+        order_entry.pack_configure(fill='y',side='left',padx=5)
+        apply_button = ctk.CTkButton(self.additional_frame,width=(self.additional_frame.winfo_width()*4/5),text='Delete')
+        apply_button.pack_configure(fill='y',side='left',padx=5)
+
+    def clear_frame(self):
+        widget_list = self.additional_frame.winfo_children()
+        for i in widget_list:
+            i.destroy()
 
     def back(self,master):
         self.pack_forget()

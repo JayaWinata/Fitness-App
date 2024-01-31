@@ -1,12 +1,17 @@
 from pages import *
+from Database import db
 import sys
 sys.path.append('../')
-from Database import db
 from Assets import plot
 
-if __name__ == '__main__':
+
+def main():
+    db.open()
     app = App()
-    # db.open()
+    plot.plot_all()
     Dashboard(app)
     app.mainloop()
-    # db.close()
+    db.close()
+
+if __name__ == '__main__':
+    main()
