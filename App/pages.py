@@ -48,6 +48,7 @@ class Dashboard(ctk.CTkFrame):
         self.data_frame.bind('<Button-1>',lambda x: self.data(master))
 
         self.show_plot(master)
+        self.show_schedule(master)
 
     def show_plot(self,master):
         plot.plot_data('weight',10)
@@ -57,6 +58,25 @@ class Dashboard(ctk.CTkFrame):
         image = ctk.CTkLabel(master=self.plot_frame,image=image,text='')
         image.pack_configure(padx=5,pady=5)
         image.bind('<Button-1>',lambda x: self.stats(master))
+
+    def show_schedule(self,master):
+        title = Title(master=self.schedule_frame,text='Today Schedule')
+        title.configure(font=('Bahnschrift SemiBold',20,'bold'))
+        title.pack(padx=30,pady=10,side='top',fill='x')
+        data = db.get_schedule('dayname(currdate())')
+        if data:
+            for i in data[:3]:
+                label = ctk.CTkLabel(self.schedule_frame,text=f'{i[0]}. {i[1]}',anchor='w')
+                label.pack(padx=10,pady=1,fill='x',side='top')
+                label.bind('<Button-1>',lambda x: self.schedule(master))
+        else:
+            for i in range(3):
+                label = ctk.CTkLabel(self.schedule_frame,text='',anchor='w')
+                label.pack(padx=10,pady=1,fill='x',side='top')
+                label.bind('<Button-1>',lambda x: self.schedule(master))
+        more_label = ctk.CTkLabel(self.schedule_frame,text='Show more >>',text_color='#5f5f5f',anchor='e')
+        more_label.pack_configure(padx=20,pady=5,side='top',fill='x')
+        more_label.bind('<Button-1>',lambda x: self.schedule(master))
 
     def stats(self,master):
         self.pack_forget()
@@ -115,6 +135,8 @@ class Schedule(ctk.CTkScrollableFrame):
         self.combo_box.pack_configure(padx=10,pady=10,fill='x',side='top')
         self.show_button = ctk.CTkButton(self,text='Show Schedule',command=self.show_schedule)
         self.show_button.pack_configure(padx=10,pady=10,fill='x',side='top')
+        self.selected_day = ctk.CTkLabel(self,text='Selected day:',anchor='w')
+        self.selected_day.pack_configure(fill='x',side='top',padx=20,pady=5)
 
         self.list_frame = ctk.CTkFrame(master=self,height=100,border_color='#5f5f5f',border_width=1,fg_color='transparent')
         self.list_frame.pack_configure(fill='x',padx=10,pady=10,side='top')
@@ -139,6 +161,7 @@ class Schedule(ctk.CTkScrollableFrame):
         self.back_lable.bind('<Button-1>',lambda x: self.back(master))
 
     def show_schedule(self):
+        self.selected_day.configure(text=f'Selected day: {self.combo_box.get()}')
         for widget in self.list_frame.winfo_children():
             widget.destroy()
 
@@ -155,7 +178,19 @@ class Schedule(ctk.CTkScrollableFrame):
         order_entry.pack_configure(fill='y',side='left',padx=5)
         value_entry = ctk.CTkEntry(master=self.additional_frame,placeholder_text='Value',fg_color='#232D3F',border_width=0,width=(self.additional_frame.winfo_width()*3/5))
         value_entry.pack_configure(fill='y',side='left',padx=5)
-        apply_button = ctk.CTkButton(self.additional_frame,width=(self.additional_frame.winfo_width()/5),text='Apply')
+
+        def apply():
+            order = order_entry.get()
+            value = value_entry.get()
+            order_list = [i[0] for i in self.data]
+            if (int(order) in order_list) and value:
+                db.update_schedule([order,value,self.combo_box.get()])
+                self.error.configure(text='Please re-enter this page to see updated data!')
+                self.clear_frame()
+            else:
+                self.error.configure('Error occured!')
+
+        apply_button = ctk.CTkButton(self.additional_frame,width=(self.additional_frame.winfo_width()/5),text='Apply',command=apply)
         apply_button.pack_configure(fill='y',side='left',padx=5)
     
     def add(self,master):
@@ -187,14 +222,18 @@ class Schedule(ctk.CTkScrollableFrame):
         order_entry = ctk.CTkEntry(master=self.additional_frame,placeholder_text='List number',width=self.additional_frame.winfo_width() / 5,fg_color='#232D3F',border_width=0)
         order_entry.pack_configure(fill='y',side='left',padx=5)
 
-        # def apply():
-        #     order = order_entry.get()
-        #     db.delete_schedule((order,self.combo_box.get()))
-        #     for i in self.list_frame.children:
-        #         if i.startswith(order):
+        def apply():
+            order = order_entry.get()
+            order_list = [i[0] for i in self.data]
+            if (int(order) in order_list):
+                db.delete_schedule((order,self.combo_box.get()))
+                self.error.configure(text='Please re-enter this page to check the deleted data!')
+                self.clear_frame()
+            else:
+                self.error.configure(text='Error occured!')
 
 
-        apply_button = ctk.CTkButton(self.additional_frame,width=(self.additional_frame.winfo_width()*4/5),text='Delete')
+        apply_button = ctk.CTkButton(self.additional_frame,width=(self.additional_frame.winfo_width()*4/5),text='Delete',command=apply)
         apply_button.pack_configure(fill='y',side='left',padx=5)
 
     def clear_frame(self):
