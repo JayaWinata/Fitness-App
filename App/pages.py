@@ -1,4 +1,5 @@
 import sys
+import tkinter as tk
 import customtkinter as ctk
 from PIL import Image, ImageFilter
 sys.path.append('../')
@@ -77,21 +78,31 @@ class Dashboard(ctk.CTkFrame):
                 label.pack(padx=10,pady=1,fill='x',side='top')
                 label.bind('<Button-1>',lambda x: self.schedule(master))
         more_label = ctk.CTkLabel(self.schedule_frame,text='More >>',text_color='#5f5f5f',anchor='e')
-        more_label.pack_configure(padx=20,pady=5,side='top',fill='x')
+        more_label.pack_configure(padx=20,pady=5,side='bottom',fill='x')
         more_label.bind('<Button-1>',lambda x: self.schedule(master))
 
     def show_data(self,master):
         bmi_label = ctk.CTkLabel(self.data_frame,anchor='w',text='Your BMI score:')
         bmi_label.pack_configure(padx=20,fill='x',pady=5,side='top')
-        bmi_score = ctk.CTkLabel(self.data_frame,anchor='w',text=round(gauge.get_bmi()[0],2),font=('TkDefaultFont',15, 'bold'))
+        temp_text = f'{round(gauge.get_bmi()[0],2)} ({gauge.get_bmi()[1]})'
+        bmi_score = ctk.CTkLabel(self.data_frame,anchor='w',text=temp_text,font=('TkDefaultFont',15, 'bold'))
         bmi_score.pack_configure(padx=20,fill='x',side='top')
-        classify_label = ctk.CTkLabel(self.data_frame,text='You\'re classified as:',anchor='w')
-        classify_label.pack_configure(padx=20,pady=5,fill='x',side='top')
-        classify = ctk.CTkLabel(self.data_frame,anchor='w',text=gauge.get_bmi()[1],font=('TkDefaultFont',15, 'bold'))
-        classify.pack_configure(padx=20,fill='x',side='top')
-        more_label = ctk.CTkLabel(self.data_frame,text='More >>',text_color='#5f5f5f',anchor='e')
-        more_label.pack_configure(padx=20,pady=5,side='top',fill='x')
+        
+        add_label = ctk.CTkLabel(self.data_frame,anchor='w',text='Add calories:')
+        add_label.pack_configure(padx=20,fill='x',pady=5,side='top')
+        add_frame = ctk.CTkFrame(self.data_frame, height=(self.data_frame.winfo_height() / 2))
+        add_frame.pack_configure(side='top',fill='x',padx=20)
+        add_entry = ctk.CTkEntry(add_frame, fg_color='#232D3F')
+        add_entry.pack_configure(side='left',fill='y',padx=2)
 
+        def add_cal():
+            db.add_calories(int(add_entry.get()))
+            add_entry.delete(0,tk.END)
+        add_button = ctk.CTkButton(add_frame,text='+',command=add_cal)
+        add_button.pack_configure(side='left',fill='both',padx=2)
+
+        more_label = ctk.CTkLabel(self.data_frame,text='More >>',text_color='#5f5f5f',anchor='e')
+        more_label.pack_configure(padx=20,pady=5,side='bottom',fill='x')
         for i in self.data_frame.winfo_children():
             i.bind('<Button-1>',lambda x: self.data(master))
 
