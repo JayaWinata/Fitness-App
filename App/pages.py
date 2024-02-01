@@ -3,6 +3,7 @@ import customtkinter as ctk
 from PIL import Image, ImageFilter
 sys.path.append('../')
 from Database import db
+from BodyGauge import gauge
 from Assets.title import Title
 from Assets import plot
 
@@ -44,11 +45,12 @@ class Dashboard(ctk.CTkFrame):
         self.schedule_frame.bind('<Button-1>',lambda x: self.schedule(master))
 
         self.data_frame = ctk.CTkFrame(self,width=(master.winfo_width()/2-10))
-        self.data_frame.pack_configure(fill='y',side='left',padx=10,pady=10)
+        self.data_frame.pack_configure(fill='both',side='left',padx=10,pady=10,expand=1)
         self.data_frame.bind('<Button-1>',lambda x: self.data(master))
 
         self.show_plot(master)
         self.show_schedule(master)
+        self.show_data(master)
 
     def show_plot(self,master):
         plot.plot_data('weight',10)
@@ -74,9 +76,25 @@ class Dashboard(ctk.CTkFrame):
                 label = ctk.CTkLabel(self.schedule_frame,text='',anchor='w')
                 label.pack(padx=10,pady=1,fill='x',side='top')
                 label.bind('<Button-1>',lambda x: self.schedule(master))
-        more_label = ctk.CTkLabel(self.schedule_frame,text='Show more >>',text_color='#5f5f5f',anchor='e')
+        more_label = ctk.CTkLabel(self.schedule_frame,text='More >>',text_color='#5f5f5f',anchor='e')
         more_label.pack_configure(padx=20,pady=5,side='top',fill='x')
         more_label.bind('<Button-1>',lambda x: self.schedule(master))
+
+    def show_data(self,master):
+        bmi_label = ctk.CTkLabel(self.data_frame,anchor='w',text='Your BMI score:')
+        bmi_label.pack_configure(padx=20,fill='x',pady=5,side='top')
+        bmi_score = ctk.CTkLabel(self.data_frame,anchor='w',text=round(gauge.get_bmi()[0],2),font=('TkDefaultFont',15, 'bold'))
+        bmi_score.pack_configure(padx=20,fill='x',side='top')
+        classify_label = ctk.CTkLabel(self.data_frame,text='You\'re classified as:',anchor='w')
+        classify_label.pack_configure(padx=20,pady=5,fill='x',side='top')
+        classify = ctk.CTkLabel(self.data_frame,anchor='w',text=gauge.get_bmi()[1],font=('TkDefaultFont',15, 'bold'))
+        classify.pack_configure(padx=20,fill='x',side='top')
+        more_label = ctk.CTkLabel(self.data_frame,text='More >>',text_color='#5f5f5f',anchor='e')
+        more_label.pack_configure(padx=20,pady=5,side='top',fill='x')
+
+        for i in self.data_frame.winfo_children():
+            i.bind('<Button-1>',lambda x: self.data(master))
+
 
     def stats(self,master):
         self.pack_forget()
