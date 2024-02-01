@@ -332,4 +332,3 @@ class EditData(ctk.CTkScrollableFrame):
             self.pack_forget()
             self.destroy()
             Data(master)
-
