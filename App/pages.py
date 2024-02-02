@@ -66,7 +66,7 @@ class Dashboard(ctk.CTkFrame):
         title = Title(master=self.schedule_frame,text='Today Schedule')
         title.configure(font=('Bahnschrift SemiBold',20,'bold'))
         title.pack(padx=30,pady=10,side='top',fill='x')
-        data = db.get_schedule('dayname(currdate())')
+        data = db.get_current_schedule()
         if data:
             for i in data[:3]:
                 label = ctk.CTkLabel(self.schedule_frame,text=f'{i[0]}. {i[1]}',anchor='w')
@@ -211,7 +211,7 @@ class Schedule(ctk.CTkScrollableFrame):
         def apply():
             order = order_entry.get()
             value = value_entry.get()
-            order_list = [i[0] for i in self.data]
+            order_list = [i[0] for i in self.data] if self.data else []
             if (int(order) in order_list) and value:
                 db.update_schedule([order,value,self.combo_box.get()])
                 self.error.configure(text='Please re-enter this page to see updated data!')
@@ -233,7 +233,7 @@ class Schedule(ctk.CTkScrollableFrame):
         def apply():
             order = order_entry.get()
             value = value_entry.get()
-            order_list = [i[0] for i in self.data]
+            order_list = [i[0] for i in self.data] if self.data else []
             if (int(order) not in order_list) and value:
                 db.add_schedule((order,value,self.combo_box.get()))
                 ctk.CTkLabel(master=self.list_frame,text=f'{order}. {value}',anchor='w').pack_configure(padx=5,pady=2,fill='x',side='top')
@@ -253,7 +253,7 @@ class Schedule(ctk.CTkScrollableFrame):
 
         def apply():
             order = order_entry.get()
-            order_list = [i[0] for i in self.data]
+            order_list = [i[0] for i in self.data] if self.data else []
             if (int(order) in order_list):
                 db.delete_schedule((order,self.combo_box.get()))
                 self.error.configure(text='Please re-enter this page to check the deleted data!')
@@ -275,15 +275,7 @@ class Schedule(ctk.CTkScrollableFrame):
         self.destroy()
         Dashboard(master)
 
-class Data(ctk.CTkScrollableFrame):
-    data_dict = {
-            'Gender': 'Male',
-            'Height':180,
-            'Weight': 70,
-            'Age':23,
-            'Body Fat': 30,
-        }
-    
+class Data(ctk.CTkScrollableFrame):    
     def __init__(self,master: ctk.CTk):
         super().__init__(master)
         self.configure(fg_color='transparent')
@@ -293,22 +285,26 @@ class Data(ctk.CTkScrollableFrame):
 
         self.calories_frame = ctk.CTkFrame(self,height=(master.winfo_height() / 4 -10))
         self.calories_frame.pack_configure(padx=10,pady=10,fill='x',side='top')
-        self.change_calories_lable = ctk.CTkLabel(self.calories_frame,text='Change daily calories >>',text_color='#5f5f5f',anchor='e')
-        self.change_calories_lable.pack_configure(side='bottom',fill='x',padx=10,pady=10)
-        self.change_calories_lable.bind('<Button-1>',lambda x: self.input_calories())
+        ctk.CTkLabel(self.calories_frame,text='Your calories today:',anchor='w').pack_configure(padx=20,pady=5,fill='y',side='left')
+        text = f'{db.get_calories()} / {db.get_calories_limit()}'
+        self.cal_desc = ctk.CTkLabel(self.calories_frame,text=text,anchor='e',font=('TkDefaultFont',16,'bold'))
+        self.cal_desc.pack_configure(fill='y',padx=20,pady=5,side='right')
+
         
         self.data_frame = ctk.CTkFrame(self,height=(master.winfo_height() * 3 / 4 -10))
         self.data_frame.pack_configure(padx=10,pady=10,fill='x',side='top')
 
-        global data_dict
-        for key,value in Data.data_dict.items():
+        for key,value in gauge.get_body_metrics().items():
             frame = ctk.CTkFrame(self.data_frame,border_color='white',border_width=.5,fg_color='transparent')
             frame.pack_configure(fill='x',side='top',padx=10,pady=10)
             ctk.CTkLabel(frame,text=key).pack_configure(side='left',padx=10)
             ctk.CTkLabel(frame,text=value).pack_configure(side='right',padx=10)
 
+        self.change_button = ctk.CTkButton(self,text='Change calories limit',command=self.input_calories)
+        self.change_button.pack_configure(fill='x',side='top',padx=10,pady=10)
         self.edit_button = ctk.CTkButton(self,text='Edit data',command=lambda: self.edit_data(master))
         self.edit_button.pack_configure(fill='x',side='top',padx=10,pady=10)
+
         self.back_lable = ctk.CTkLabel(master=self,text='<< Back',anchor='w',text_color='#5f5f5f')
         self.back_lable.pack_configure(padx=20,pady=10,fill='x',side='top')
         self.back_lable.bind('<Button-1>',lambda x: self.back(master))
@@ -328,6 +324,9 @@ class Data(ctk.CTkScrollableFrame):
         x = (input_dialog.winfo_screenwidth() - input_dialog.winfo_width()) // 2 -50
         y = (input_dialog.winfo_screenheight() - input_dialog.winfo_height()) // 2
         input_dialog.geometry(f'{input_dialog.winfo_width()}x{input_dialog.winfo_height()}+{x}+{y}')
+        db.set_calories_limit(input_dialog.get_input())
+        text = f'{db.get_calories()} / {db.get_calories_limit()}'
+        self.cal_desc.configure(text=text)
 
 class EditData(ctk.CTkScrollableFrame):
         def __init__(self,master: ctk.CTk):
@@ -337,14 +336,34 @@ class EditData(ctk.CTkScrollableFrame):
             self.title = Title(self,'Edit Data')
             self.title.pack_configure(side='top',fill='x',padx=20,pady=5)
 
-            for i in Data.data_dict.keys():
-                label = str(i + ": ")
-                ctk.CTkLabel(self,text=label,anchor='w').pack_configure(fill='x',side='top',padx=45,pady=5)
-                if (i == 'Gender'):
-                    option = ['Male','Female']
-                    ctk.CTkComboBox(self,values=option,border_width=0,dropdown_fg_color='#232D3F',dropdown_hover_color='#008170').pack_configure(padx=40,pady=5,fill='x',side='top')
-                else:
-                    ctk.CTkEntry(self,fg_color='#232D3F').pack_configure(fill='x',side='top',padx=40,pady=5)
+            self.gender_label = ctk.CTkLabel(self,text='Gender:',anchor='w')
+            self.gender_label.pack_configure(fill='x',side='top',padx=45,pady=5)
+            option = ['Male','Female']
+            self.gender_cb = ctk.CTkComboBox(self,values=option,border_width=0,dropdown_fg_color='#232D3F',dropdown_hover_color='#008170',variable=ctk.StringVar(value=gauge.get_body_metrics()['Gender']))
+            self.gender_cb.pack_configure(padx=40,pady=5,fill='x',side='top')
+
+            self.age_label = ctk.CTkLabel(self,text='Age:',anchor='w')
+            self.age_label.pack_configure(fill='x',side='top',padx=45,pady=5)
+            self.age_entry = ctk.CTkEntry(self,fg_color='#232D3F',textvariable=ctk.StringVar(value=gauge.get_body_metrics()['Age']))
+            self.age_entry.pack_configure(fill='x',side='top',padx=40,pady=5)
+
+            self.weight_label = ctk.CTkLabel(self,text='Weight:',anchor='w')
+            self.weight_label.pack_configure(fill='x',side='top',padx=45,pady=5)
+            self.weight_entry = ctk.CTkEntry(self,fg_color='#232D3F', textvariable=ctk.StringVar(value=gauge.get_body_metrics()['Weight']))
+            self.weight_entry.pack_configure(fill='x',side='top',padx=40,pady=5)
+
+            self.height_label = ctk.CTkLabel(self,text='Height:',anchor='w')
+            self.height_label.pack_configure(fill='x',side='top',padx=45,pady=5)
+            self.height_entry = ctk.CTkEntry(self,fg_color='#232D3F',textvariable=ctk.StringVar(value=gauge.get_body_metrics()['Height']))
+            self.height_entry.pack_configure(fill='x',side='top',padx=40,pady=5)
+            
+            activity_list = [value for _,value in gauge.get_activity_mapper().items()]
+            self.activity_label = ctk.CTkLabel(self,text='Activity:',anchor='w')
+            self.activity_label.pack_configure(fill='x',side='top',padx=45,pady=5)
+            self.activity_cb = ctk.CTkComboBox(self,values=activity_list,border_width=0,dropdown_fg_color='#232D3F',dropdown_hover_color='#008170',variable=ctk.StringVar(value=gauge.get_body_metrics()['Activity']))
+            self.activity_cb.pack_configure(padx=40,pady=5,fill='x',side='top')
+
+            ctk.CTkLabel(self,text='Please restart the app after edit your data!',anchor='w').pack_configure(padx=45,pady=10,side='top',fill='x')
             
             button_frame = ctk.CTkFrame(self,fg_color='transparent')
             button_frame.pack_configure(side='top',fill='x',padx=40,pady=20)
@@ -355,7 +374,8 @@ class EditData(ctk.CTkScrollableFrame):
             cancel_button.pack_configure(side='left',fill='both')
 
         def save(self):
-            pass
+            data_tuple = (self.gender_cb.get(),self.age_entry.get(),self.weight_entry.get(),self.height_entry.get(),gauge.get_activity_mapper(self.activity_cb.get(),reversed=True))
+            db.insert_data(data_tuple)
 
         def cancel(self,master):
             self.pack_forget()
