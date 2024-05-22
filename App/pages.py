@@ -55,7 +55,7 @@ class Dashboard(ctk.CTkFrame):
 
     def show_plot(self,master):
         plot.plot_data('weight',10)
-        raw_image = Image.open('../Assets/Image/weight.png')
+        raw_image = Image.open('../Assets/Image/daily_calories.png')
         raw_image = raw_image.filter(ImageFilter.DETAIL)
         image = ctk.CTkImage(dark_image=raw_image,size=(450,120))
         image = ctk.CTkLabel(master=self.plot_frame,image=image,text='')

@@ -12,12 +12,12 @@ def plot_data(column_name: str,limit: int):
         plot_daily_calories(limit)
     else:
         data = db.get_history(column_name,limit)
-
         df_column_name = f'{column_name}'.replace('_',' ').title()
         data = pd.DataFrame(data,columns=['Date',df_column_name])
         data['Date'] = pd.to_datetime(data['Date'])
         data = data[~data['Date'].duplicated()]
-        data = data.set_index('Date').asfreq('D',method='ffill').sort_values(by='Date',ascending=False).iloc[:limit,:].sort_values(by='Date')
+        # data = data.set_index('Date').asfreq('D',method='ffill').sort_values(by='Date',ascending=False).iloc[:limit,:].sort_values(by='Date')
+        data = data.set_index('Date')
 
         sns.set_style("whitegrid")
 
