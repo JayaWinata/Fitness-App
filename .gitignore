@@ -1,5 +1,6 @@
 */__pycache__/
-Database/
+# Database/
 test.*
 Assets/Image
 Assets/*.png
+.env
